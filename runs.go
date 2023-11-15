@@ -35,6 +35,7 @@ type Error struct {
 // CreateRunParams represents parameters for creating a run.
 type CreateRunParams struct {
 	AssistantID  string                 `json:"assistant_id"`
+	ThreadID     string                 `json:"thread_id"`
 	Model        string                 `json:"model,omitempty"`
 	Instructions string                 `json:"instructions,omitempty"`
 	Tools        []ToolObject           `json:"tools,omitempty"`
@@ -99,24 +100,16 @@ func AssembleCreateThreadAndRunURL() string {
 }
 
 // CreateRun creates a new run on a thread.
-func (c *Client) CreateRun(ctx context.Context, threadID, assistantID, model, instructions string, tools []ToolObject, metadata map[string]interface{}) (*RunObject, error) {
-	if threadID == "" || assistantID == "" {
+func (c *Client) CreateRun(ctx context.Context, threadID, bodyParams CreateRunParams) (*RunObject, error) {
+	if bodyParams.ThreadID == "" || bodyParams.AssistantID == "" {
 		return nil, fmt.Errorf("thread ID and assistant ID must be valid strings")
 	}
 
-	body := CreateRunParams{
-		AssistantID:  assistantID,
-		Model:        model,
-		Instructions: instructions,
-		Tools:        tools,
-		Metadata:     metadata,
-	}
-
-	fullURL := AssembleThreadRunsURL(threadID)
+	fullURL := AssembleThreadRunsURL(bodyParams.ThreadID)
 
 	var result RunObject
 
-	err := c.sendHTTPRequest(ctx, http.MethodPost, fullURL, body, &result, assistantsPostHeaders)
+	err := c.sendHTTPRequest(ctx, http.MethodPost, fullURL, bodyParams, &result, assistantsPostHeaders)
 	if err != nil {
 		return nil, err
 	}
