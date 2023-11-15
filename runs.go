@@ -100,7 +100,7 @@ func AssembleCreateThreadAndRunURL() string {
 }
 
 // CreateRun creates a new run on a thread.
-func (c *Client) CreateRun(ctx context.Context, threadID, bodyParams CreateRunParams) (*RunObject, error) {
+func (c *Client) CreateRun(ctx context.Context, bodyParams CreateRunParams) (*RunObject, error) {
 	if bodyParams.ThreadID == "" || bodyParams.AssistantID == "" {
 		return nil, fmt.Errorf("thread ID and assistant ID must be valid strings")
 	}
