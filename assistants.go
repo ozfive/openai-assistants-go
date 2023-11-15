@@ -23,8 +23,8 @@ type AssistantObject struct {
 	Metadata     map[string]interface{} `json:"metadata"`
 }
 
-// CreateAssistantRequest is the request struct for CreateAssistant function.
-type AssistantRequest struct {
+// AssistantParams is the request struct for CreateAssistant function.
+type AssistantParams struct {
 	Model        string                 `json:"model"`
 	Name         string                 `json:"name,omitempty"`
 	Description  string                 `json:"description,omitempty"`
@@ -94,9 +94,9 @@ func AssembleAssistantsListURL(limit int, order, after, before string) string {
 }
 
 // CreateAssistant creates a new assistant.
-func (c *Client) CreateAssistant(ctx context.Context, req AssistantRequest) (*AssistantObject, error) {
+func (c *Client) CreateAssistant(ctx context.Context, bodyParams AssistantParams) (*AssistantObject, error) {
 	var result AssistantObject
-	err := c.sendHTTPRequest(ctx, http.MethodPost, getRequestURL("assistants"), req, &result, assistantsPostHeaders)
+	err := c.sendHTTPRequest(ctx, http.MethodPost, getRequestURL("assistants"), bodyParams, &result, assistantsPostHeaders)
 	if err != nil {
 		return nil, err
 	}
@@ -114,9 +114,9 @@ func (c *Client) RetrieveAssistant(ctx context.Context, assistantID string) (*As
 }
 
 // ModifyAssistant modifies an existing assistant.
-func (c *Client) ModifyAssistant(ctx context.Context, assistantID string, req AssistantRequest) (*AssistantObject, error) {
+func (c *Client) ModifyAssistant(ctx context.Context, assistantID string, bodyParams AssistantParams) (*AssistantObject, error) {
 	var result AssistantObject
-	err := c.sendHTTPRequest(ctx, http.MethodPost, AssembleAssistantURL(assistantID), req, &result, assistantsPostHeaders)
+	err := c.sendHTTPRequest(ctx, http.MethodPost, AssembleAssistantURL(assistantID), bodyParams, &result, assistantsPostHeaders)
 	if err != nil {
 		return nil, err
 	}
