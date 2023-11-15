@@ -67,14 +67,15 @@ type FilePath struct {
 
 // CreateMessageParams represents parameters for creating a message.
 type CreateMessageParams struct {
+	ThreadID string            `json:"thread_id"`
 	Role     string            `json:"role"`
-	Content  string            `json:"content"`
+	Content  []Content         `json:"content"`
 	FileIDs  []string          `json:"file_ids"`
 	Metadata map[string]string `json:"metadata"`
 }
 
 // CreateMessage creates a message in a specified thread.
-func (c *Client) CreateMessage(ctx context.Context, threadId, role string, content []Content, fileIds []string, metadata map[string]string) (*Message, error) {
+func (c *Client) CreateMessage(ctx context.Context, bodyParams CreateMessageParams) (*Message, error) {
 	if role != "user" {
 		return nil, fmt.Errorf("currently, only 'user' role is supported")
 	}
@@ -127,10 +128,11 @@ func (c *Client) ModifyMessage(ctx context.Context, threadId, messageId string, 
 
 // ListMessagesParams represents parameters for listing messages.
 type ListMessagesParams struct {
-	Limit  string `json:"limit"`
-	Order  string `json:"order"`
-	After  string `json:"after"`
-	Before string `json:"before"`
+	Limit    int    `json:"limit"`
+	ThreadID string `json:"thread_id"`
+	Order    string `json:"order"`
+	After    string `json:"after"`
+	Before   string `json:"before"`
 }
 
 // ListMessagesResponse represents the response structure for listing messages in a thread.
@@ -143,19 +145,19 @@ type ListMessagesResponse struct {
 }
 
 // ListMessages lists messages in a thread.
-func (c *Client) ListMessages(ctx context.Context, threadId string, limit int, order, after, before string) (*ListMessagesResponse, error) {
+func (c *Client) ListMessages(ctx context.Context, threadId string, bodyParams ListMessagesParams) (*ListMessagesResponse, error) {
 	queryParams := url.Values{}
-	if limit > 0 {
-		queryParams.Set("limit", fmt.Sprintf("%d", limit))
+	if bodyParams.Limit > 0 {
+		queryParams.Set("limit", fmt.Sprintf("%d", bodyParams.Limit))
 	}
-	if order != "" {
-		queryParams.Set("order", order)
+	if bodyParams.Order != "" {
+		queryParams.Set("order", bodyParams.Order)
 	}
-	if after != "" {
-		queryParams.Set("after", after)
+	if bodyParams.After != "" {
+		queryParams.Set("after", bodyParams.After)
 	}
-	if before != "" {
-		queryParams.Set("before", before)
+	if bodyParams.Before != "" {
+		queryParams.Set("before", bodyParams.Before)
 	}
 
 	fullURL, err := addQueryParams(getRequestURL(fmt.Sprintf("threads/%s/messages", threadId)), queryParams)
