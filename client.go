@@ -204,3 +204,14 @@ func addQueryParams(u string, params url.Values) (string, error) {
 	parsedURL.RawQuery = params.Encode()
 	return parsedURL.String(), nil
 }
+
+// validateStringInputs checks if any of the provided string inputs are empty.
+// It returns an error with a message indicating the first empty input encountered.
+func validateStringInputs(inputs ...string) error {
+	for i, input := range inputs {
+		if input == "" {
+			return fmt.Errorf("input %d is empty", i+1)
+		}
+	}
+	return nil
+}

@@ -76,50 +76,65 @@ func AssembleAssistantURL(assistantID string) string {
 }
 
 // AssembleAssistantsListURL constructs the URL for listing assistants.
-func AssembleAssistantsListURL(limit int, order, after, before string) string {
+func AssembleAssistantsListURL(urlParams ListAssistantsParams) string {
+
 	queryParams := url.Values{}
-	if limit > 0 {
-		queryParams.Set("limit", fmt.Sprintf("%d", limit))
+
+	if urlParams.Limit > 0 {
+		queryParams.Set("limit", fmt.Sprintf("%d", urlParams.Limit))
 	}
-	if order != "" {
-		queryParams.Set("order", order)
+
+	if urlParams.Order != "" {
+		queryParams.Set("order", urlParams.Order)
 	}
-	if after != "" {
-		queryParams.Set("after", after)
+
+	if urlParams.After != "" {
+		queryParams.Set("after", urlParams.After)
 	}
-	if before != "" {
-		queryParams.Set("before", before)
+
+	if urlParams.Before != "" {
+		queryParams.Set("before", urlParams.Before)
 	}
+
 	return getRequestURL("assistants") + "?" + queryParams.Encode()
 }
 
 // CreateAssistant creates a new assistant.
 func (c *Client) CreateAssistant(ctx context.Context, bodyParams AssistantParams) (*AssistantObject, error) {
+
 	var result AssistantObject
+
 	err := c.sendHTTPRequest(ctx, http.MethodPost, getRequestURL("assistants"), bodyParams, &result, assistantsPostHeaders)
 	if err != nil {
 		return nil, err
 	}
+
 	return &result, nil
 }
 
 // RetrieveAssistant retrieves an assistant by ID.
 func (c *Client) RetrieveAssistant(ctx context.Context, assistantID string) (*AssistantObject, error) {
+
 	var result AssistantObject
+
 	err := c.sendHTTPRequest(ctx, http.MethodGet, AssembleAssistantURL(assistantID), nil, &result, assistantsBaseHeaders)
 	if err != nil {
 		return nil, err
 	}
+
 	return &result, nil
 }
 
 // ModifyAssistant modifies an existing assistant.
 func (c *Client) ModifyAssistant(ctx context.Context, assistantID string, bodyParams AssistantParams) (*AssistantObject, error) {
+
 	var result AssistantObject
+
 	err := c.sendHTTPRequest(ctx, http.MethodPost, AssembleAssistantURL(assistantID), bodyParams, &result, assistantsPostHeaders)
 	if err != nil {
 		return nil, err
 	}
+
 	return &result, nil
 }
 
@@ -130,6 +145,51 @@ type DeleteAssistantResponse struct {
 	Deleted bool   `json:"deleted"`
 }
 
+/*
+Success: 200
+
+	Data
+	{
+		"id": "asst_id",
+		"object": "assistant.deleted",
+		"deleted": true
+	}
+
+Error: No Assistant Found 404
+
+	Data
+	{
+		"error": {
+			"message": "No assistant found with id 'asst_id'.",
+			"type": "invalid_request_error",
+			"param": null,
+			"code": null
+		}
+	}
+Error: Missing Header Param OpenAI-Beta 401 hint at a value of assistants=v1
+
+	Data
+	{
+		"error": {
+			"message": "You must provide the 'OpenAI-Beta' header to access the Assistants API. Please try again by setting the header 'OpenAI-Beta: assistants=v1'.",
+			"type": "invalid_request_error",
+			"param": null,
+			"code": "invalid_beta"
+		}
+	}
+
+Error: Incorrect API Key 401 Check to see if single quotes in message string are empty. If they are then return empty API Key error instead of incorrect API Key error.
+
+	Data
+	{
+		"error": {
+			"message": "Incorrect API key provided: ''. You can find your API key at https://platform.openai.com/account/api-keys.",
+			"type": "invalid_request_error",
+			"param": null,
+			"code": "invalid_api_key"
+		}
+	}
+*/
 // DeleteAssistant deletes an assistant by ID.
 func (c *Client) DeleteAssistant(ctx context.Context, assistantID string) error {
 	return c.sendHTTPRequest(ctx, http.MethodDelete, AssembleAssistantURL(assistantID), nil, nil, assistantsBaseHeaders)
@@ -144,20 +204,41 @@ type ListAssistantsResponse struct {
 	HasMore bool               `json:"has_more"`
 }
 
-// ListAssistants lists all assistants.
-func (c *Client) ListAssistants(ctx context.Context, limit int, order, after, before string) (*ListAssistantsResponse, error) {
-	queryParams := url.Values{}
-	if limit > 0 {
-		queryParams.Set("limit", fmt.Sprintf("%d", limit))
-	}
-	// Set other query parameters (order, after, before) similarly if they are non-empty
+type ListAssistantsParams struct {
+	Limit  int
+	Order  string
+	After  string
+	Before string
+}
 
-	fullURL := AssembleAssistantsListURL(limit, order, after, before)
+/*
+Empty List Assistants Response - When 0 assistants exist.
+
+	{
+		"object": "list",
+		"data": [],
+		"first_id": null,
+		"last_id": null,
+		"has_more": false
+	}
+
+*/
+// ListAssistants lists all assistants.
+func (c *Client) ListAssistants(ctx context.Context, urlParams ListAssistantsParams) (*ListAssistantsResponse, error) {
+	queryParams := url.Values{}
+	if urlParams.Limit > 0 {
+		queryParams.Set("limit", fmt.Sprintf("%d", urlParams.Limit))
+	}
+
+	// Set other query parameters (limit, order, after, before) similarly if they are non-empty
+	fullURL := AssembleAssistantsListURL(urlParams)
 
 	var result ListAssistantsResponse
+
 	err := c.sendHTTPRequest(ctx, http.MethodGet, fullURL, nil, &result, assistantsBaseHeaders)
 	if err != nil {
 		return nil, err
 	}
+
 	return &result, nil
 }

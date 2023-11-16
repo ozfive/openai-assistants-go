@@ -15,30 +15,32 @@ type AssistantFileObject struct {
 	AssistantID string `json:"assistant_id"`
 }
 
-// AssistantFileRequest represents the request body for creating an assistant file.
-type AssistantFileRequest struct {
-	FileID string `json:"file_id"`
+// AssembleAssistantFilesURL constructs the URL for listing or creating assistant files.
+func AssembleAssistantFilesURL(assistantID string) string {
+	return getRequestURL(fmt.Sprintf("assistants/%s/files", assistantID))
 }
 
-// ListAssistantFilesParams represents parameters for listing assistant files.
-type ListAssistantFilesParams struct {
-	Limit  int
-	Order  string
-	After  string
-	Before string
+// AssembleAssistantFileURL constructs the URL for retrieving, modifying, or deleting a specific assistant file.
+func AssembleAssistantFileURL(assistantID, fileID string) string {
+	return getRequestURL(fmt.Sprintf("assistants/%s/files/%s", assistantID, fileID))
+}
+
+type CreateeAssistantFileParams struct {
+	AssistantID string `json:"assistant_id"`
+	FileID      string `json:"file_id"`
 }
 
 // CreateAssistantFile creates an assistant file.
-func (c *Client) CreateAssistantFile(ctx context.Context, assistantId, fileId string) (*ApiResponse, error) {
+func (c *Client) CreateAssistantFile(ctx context.Context, bodyParams CreateeAssistantFileParams) (*ApiResponse, error) {
 	// Input Validation
-	if assistantId == "" || fileId == "" {
+	if bodyParams.AssistantID == "" || bodyParams.FileID == "" {
 		return nil, fmt.Errorf("assistantId and fileId are required")
 	}
 
 	// Prepare request body
-	body := map[string]string{"file_id": fileId}
+	body := map[string]string{"file_id": bodyParams.FileID}
 
-	fullURL := getRequestURL(fmt.Sprintf("assistants/%s/files", assistantId))
+	fullURL := AssembleAssistantFilesURL(bodyParams.AssistantID)
 
 	var result ApiResponse
 	err := c.sendHTTPRequest(ctx, http.MethodPost, fullURL, body, &result, assistantsPostHeaders)
@@ -48,14 +50,19 @@ func (c *Client) CreateAssistantFile(ctx context.Context, assistantId, fileId st
 	return &result, nil
 }
 
+type RetrieveAssistantFileParams struct {
+	AssistantID string `json:"assistant_id"`
+	FileID      string `json:"file_id"`
+}
+
 // RetrieveAssistantFile retrieves a specific assistant file.
-func (c *Client) RetrieveAssistantFile(ctx context.Context, assistantId, fileId string) (*ApiResponse, error) {
+func (c *Client) RetrieveAssistantFile(ctx context.Context, urlParams RetrieveAssistantFileParams) (*ApiResponse, error) {
 	// Input Validation
-	if assistantId == "" || fileId == "" {
+	if urlParams.AssistantID == "" || urlParams.FileID == "" {
 		return nil, fmt.Errorf("assistantId and fileId are required")
 	}
 
-	fullURL := getRequestURL(fmt.Sprintf("assistants/%s/files/%s", assistantId, fileId))
+	fullURL := AssembleAssistantFileURL(urlParams.AssistantID, urlParams.FileID)
 
 	var result ApiResponse
 	err := c.sendHTTPRequest(ctx, http.MethodGet, fullURL, nil, &result, assistantsBaseHeaders)
@@ -65,14 +72,19 @@ func (c *Client) RetrieveAssistantFile(ctx context.Context, assistantId, fileId 
 	return &result, nil
 }
 
+type DeleteAssistantFileParams struct {
+	AssistantID string `json:"assistant_id"`
+	FileID      string `json:"file_id"`
+}
+
 // DeleteAssistantFile deletes a specific assistant file.
-func (c *Client) DeleteAssistantFile(ctx context.Context, assistantId, fileId string) (*ApiResponse, error) {
+func (c *Client) DeleteAssistantFile(ctx context.Context, pathParams DeleteAssistantFileParams) (*ApiResponse, error) {
 	// Input Validation
-	if assistantId == "" || fileId == "" {
+	if pathParams.AssistantID == "" || pathParams.FileID == "" {
 		return nil, fmt.Errorf("assistantId and fileId are required")
 	}
 
-	fullURL := getRequestURL(fmt.Sprintf("assistants/%s/files/%s", assistantId, fileId))
+	fullURL := AssembleAssistantFileURL(pathParams.AssistantID, pathParams.FileID)
 
 	var result ApiResponse
 	err := c.sendHTTPRequest(ctx, http.MethodDelete, fullURL, nil, &result, assistantsBaseHeaders)
@@ -82,43 +94,61 @@ func (c *Client) DeleteAssistantFile(ctx context.Context, assistantId, fileId st
 	return &result, nil
 }
 
+// ListAssistantFilesParams represents parameters for listing assistant files.
+type ListAssistantFilesParams struct {
+	AssistantID string `json:"assistant_id"`
+	Limit       int    `json:"limit"`
+	Order       string `json:"order"`
+	After       string `json:"after"`
+	Before      string `json:"before"`
+}
+
 // ListAssistantFiles lists all assistant files for a given assistant.
-func (c *Client) ListAssistantFiles(ctx context.Context, assistantId string, limit int, order, after, before string) (*ApiResponse, error) {
+func (c *Client) ListAssistantFiles(ctx context.Context, urlParams ListAssistantFilesParams) (*ApiResponse, error) {
+
 	// Input Validation
-	if assistantId == "" {
+	if urlParams.AssistantID == "" {
 		return nil, fmt.Errorf("invalid assistant ID")
 	}
-	if limit < 0 || limit > 100 {
+
+	if urlParams.Limit < 0 || urlParams.Limit > 100 {
 		return nil, fmt.Errorf("limit must be between 0 and 100")
 	}
-	if order != "" && order != "asc" && order != "desc" {
+
+	if urlParams.Order != "" && urlParams.Order != "asc" && urlParams.Order != "desc" {
 		return nil, fmt.Errorf("order must be either 'asc' or 'desc'")
 	}
 
 	// Construct query parameters
 	queryParams := url.Values{}
-	if limit > 0 {
-		queryParams.Set("limit", fmt.Sprintf("%d", limit))
-	}
-	if order != "" {
-		queryParams.Set("order", order)
-	}
-	if after != "" {
-		queryParams.Set("after", after)
-	}
-	if before != "" {
-		queryParams.Set("before", before)
+
+	if urlParams.Limit > 0 {
+		queryParams.Set("limit", fmt.Sprintf("%d", urlParams.Limit))
 	}
 
-	fullURL, err := addQueryParams(getRequestURL(fmt.Sprintf("assistants/%s/files", assistantId)), queryParams)
+	if urlParams.Order != "" {
+		queryParams.Set("order", urlParams.Order)
+	}
+
+	if urlParams.After != "" {
+		queryParams.Set("after", urlParams.After)
+	}
+
+	if urlParams.Before != "" {
+		queryParams.Set("before", urlParams.Before)
+	}
+
+	fullURL, err := addQueryParams(AssembleAssistantFilesURL(urlParams.AssistantID), queryParams)
 	if err != nil {
 		return nil, err
 	}
 
 	var result ApiResponse
+
 	err = c.sendHTTPRequest(ctx, http.MethodGet, fullURL, nil, &result, assistantsBaseHeaders)
 	if err != nil {
 		return nil, err
 	}
+
 	return &result, nil
 }
