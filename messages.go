@@ -232,4 +232,6 @@ func (c *Client) ListMessagesOnThread(ctx context.Context, urlParams ListMessage
 	return &result, nil
 }
 
-func DeleteMessage(ctx context.Context)
+func DeleteMessage(ctx context.Context) {
+
+}

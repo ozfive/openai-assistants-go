@@ -24,29 +24,43 @@ type ListFilesResponse struct {
 	Object string       `json:"object"`
 }
 
+type SendFileParams struct {
+	Method   string      `json:"method"`
+	Endpoint string      `json:"endpoint"`
+	Body     interface{} `json:"body"`
+	Result   interface{} `json:"result"`
+}
+
 // sendFileAPIRequest sends an HTTP request for file API and returns the response body.
-func (c *Client) sendFileAPIRequest(ctx context.Context, method, endpoint string, body interface{}, result interface{}) error {
-	url := getRequestURL(endpoint)
+func (c *Client) sendFileAPIRequest(ctx context.Context, params SendFileParams) error {
+
+	url := getRequestURL(params.Endpoint)
 
 	headers := map[string]string{
 		"Content-Type":  "application/json",
 		"Authorization": "Bearer " + c.APIKey,
 	}
 
-	return c.sendHTTPRequest(ctx, method, url, body, result, headers)
+	return c.sendHTTPRequest(ctx, params.Method, url, params.Body, params.Result, headers)
+}
+
+type UploadFileParams struct {
+	FilePath string `json:"file_path"`
+	Purpose  string `json:"purpose"`
 }
 
 // UploadFile uploads a file to OpenAI.
-func (c *Client) UploadFile(ctx context.Context, filePath, purpose string) (*FileObject, error) {
+func (c *Client) UploadFile(ctx context.Context, params UploadFileParams) (*FileObject, error) {
+
 	endpoint := "files"
 
-	file, err := os.Open(filePath)
+	file, err := os.Open(params.FilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %v", err)
 	}
 	defer file.Close()
 
-	body, writer := createMultipartRequest(file, purpose)
+	body, writer := createMultipartRequest(file, params.Purpose)
 
 	req, err := http.NewRequestWithContext(ctx, "POST", getRequestURL(endpoint), io.NopCloser(body))
 	if err != nil {
