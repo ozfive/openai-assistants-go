@@ -24,24 +24,16 @@ type ListFilesResponse struct {
 	Object string       `json:"object"`
 }
 
-type SendFileParams struct {
-	Method   string      `json:"method"`
-	Endpoint string      `json:"endpoint"`
-	Body     interface{} `json:"body"`
-	Result   interface{} `json:"result"`
-}
-
 // sendFileAPIRequest sends an HTTP request for file API and returns the response body.
-func (c *Client) sendFileAPIRequest(ctx context.Context, params SendFileParams) error {
-
-	url := getRequestURL(params.Endpoint)
+func (c *Client) sendFileAPIRequest(ctx context.Context, method, endpoint string, body interface{}, result interface{}) error {
+	url := getRequestURL(endpoint)
 
 	headers := map[string]string{
 		"Content-Type":  "application/json",
 		"Authorization": "Bearer " + c.APIKey,
 	}
 
-	return c.sendHTTPRequest(ctx, params.Method, url, params.Body, params.Result, headers)
+	return c.sendHTTPRequest(ctx, method, url, body, result, headers)
 }
 
 type UploadFileParams struct {
@@ -80,6 +72,7 @@ func (c *Client) UploadFile(ctx context.Context, params UploadFileParams) (*File
 
 // ListFiles lists all files belonging to the user's organization.
 func (c *Client) ListFiles(ctx context.Context, purpose string) (*ListFilesResponse, error) {
+
 	endpoint := "files"
 
 	url := getRequestURL(endpoint)
@@ -98,6 +91,7 @@ func (c *Client) ListFiles(ctx context.Context, purpose string) (*ListFilesRespo
 
 // DeleteFile deletes a file.
 func (c *Client) DeleteFile(ctx context.Context, fileID string) (*FileObject, error) {
+
 	endpoint := fmt.Sprintf("files/%s", fileID)
 
 	var result FileObject
