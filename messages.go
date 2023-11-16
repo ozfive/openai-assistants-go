@@ -17,6 +17,7 @@ type Text struct {
 	Annotations []Annotation `json:"annotations"`
 }
 
+// TODO: Define them.
 type Annotation struct {
 	// Define fields for annotations as needed
 }
@@ -75,8 +76,8 @@ type CreateMessageParams struct {
 }
 
 // CreateMessage creates a message in a specified thread.
-func (c *Client) CreateMessage(ctx context.Context, bodyParams CreateMessageParams) (*Message, error) {
-	if role != "user" {
+func (c *Client) CreateMessage(ctx context.Context, params CreateMessageParams) (*Message, error) {
+	if params.Role != "user" {
 		return nil, fmt.Errorf("currently, only 'user' role is supported")
 	}
 
@@ -86,14 +87,14 @@ func (c *Client) CreateMessage(ctx context.Context, bodyParams CreateMessagePara
 		FileIDs  []string          `json:"file_ids,omitempty"`
 		Metadata map[string]string `json:"metadata,omitempty"`
 	}{
-		Role:     role,
-		Content:  content,
-		FileIDs:  fileIds,
-		Metadata: metadata,
+		Role:     params.Role,
+		Content:  params.Content,
+		FileIDs:  params.FileIDs,
+		Metadata: params.Metadata,
 	}
 
 	var result Message
-	err := c.sendHTTPRequest(ctx, http.MethodPost, getRequestURL(fmt.Sprintf("threads/%s/messages", threadId)), requestBody, &result, assistantsPostHeaders)
+	err := c.sendHTTPRequest(ctx, http.MethodPost, getRequestURL(fmt.Sprintf("threads/%s/messages", params.ThreadID)), requestBody, &result, assistantsPostHeaders)
 	if err != nil {
 		return nil, err
 	}
