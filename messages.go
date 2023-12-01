@@ -31,10 +31,10 @@ type Content struct {
 }
 
 type Message struct {
-	ID          string            `json:"id"`
-	Object      string            `json:"object"`
-	CreatedAt   int               `json:"created_at"`
-	ThreadID    string            `json:"thread_id"`
+	ID          string            `json:"id,omitempty"`
+	Object      string            `json:"object,omitempty"`
+	CreatedAt   int               `json:"created_at,omitempty"`
+	ThreadID    string            `json:"thread_id,omitempty"`
 	Role        string            `json:"role"`
 	Content     []Content         `json:"content"`
 	FileIDs     []string          `json:"file_ids"`
