@@ -68,11 +68,11 @@ type FilePath struct {
 
 // CreateMessageParams represents parameters for creating a message.
 type CreateMessageParams struct {
-	ThreadID string            `json:"thread_id"`
+	ThreadID string            `json:"thread_id"` // Path Param
 	Role     string            `json:"role"`
-	Content  []Content         `json:"content"`
-	FileIDs  []string          `json:"file_ids"`
-	Metadata map[string]string `json:"metadata"`
+	Content  string            `json:"content"`
+	FileIDs  []string          `json:"file_ids,omitempty"`
+	Metadata map[string]string `json:"metadata,omitempty"`
 }
 
 // AssembleThreadMessagesURL constructs the URL for listing or creating messages in a thread.
