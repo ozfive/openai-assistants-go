@@ -20,15 +20,6 @@ const (
 	baseURL = "https://api.openai.com/v1/"
 )
 
-var assistantsPostHeaders = map[string]string{
-	"Content-Type": "application/json",
-	"OpenAI-Beta":  "assistants=v1",
-}
-
-var assistantsBaseHeaders = map[string]string{
-	"OpenAI-Beta": "assistants=v1",
-}
-
 // Client is a client for the OpenAI Assistants API.
 // https://platform.openai.com/docs/api-reference/assistants
 type Client struct {

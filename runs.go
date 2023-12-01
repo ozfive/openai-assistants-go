@@ -27,11 +27,6 @@ type RunObject struct {
 	Metadata     map[string]string `json:"metadata,omitempty"`
 }
 
-type Error struct {
-	Code    string `json:"code"` // One of server_error or rate_limit_exceeded
-	Message string `json:"message"`
-}
-
 // CreateRunParams represents parameters for creating a run.
 type CreateRunParams struct {
 	AssistantID  string                 `json:"assistant_id"`

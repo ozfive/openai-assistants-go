@@ -11,9 +11,9 @@ import (
 // The choice to use map[string]interface{} instead of map[string]any was due to
 // the fact that I wanted to support go compilers before 1.18.
 type AssistantObject struct {
-	ID           string                 `json:"id"`
-	Object       string                 `json:"object"`
-	CreatedAt    int64                  `json:"created_at"`
+	ID           string                 `json:"id,omitempty"`
+	Object       string                 `json:"object,omitempty"`
+	CreatedAt    int64                  `json:"created_at,omitempty"`
 	Name         string                 `json:"name,omitempty"`
 	Description  string                 `json:"description,omitempty"`
 	Model        string                 `json:"model"`
@@ -69,6 +69,14 @@ type FunctionParamUnit struct {
 }
 
 // Assistant-related URL Assembly Functions
+var assistantsPostHeaders = map[string]string{
+	"Content-Type": "application/json",
+	"OpenAI-Beta":  "assistants=v1",
+}
+
+var assistantsBaseHeaders = map[string]string{
+	"OpenAI-Beta": "assistants=v1",
+}
 
 // AssembleAssistantURL constructs the URL for a specific assistant.
 func AssembleAssistantURL(assistantID string) string {
@@ -138,61 +146,85 @@ func (c *Client) ModifyAssistant(ctx context.Context, assistantID string, bodyPa
 	return &result, nil
 }
 
-// DeleteAssistantResponse is the response struct for DeleteAssistant function.
+// Assistant represents the main structure of your JSON.
 type DeleteAssistantResponse struct {
 	ID      string `json:"id"`
 	Object  string `json:"object"`
 	Deleted bool   `json:"deleted"`
+	Error   *Error `json:"error,omitempty"` // Use omitempty to omit the error field when it's nil
+}
+
+// Error represents the error structure embedded in your Assistant struct.
+type Error struct {
+	Message string  `json:"message"`
+	Type    string  `json:"type"`
+	Param   *string `json:"param"` // Use pointer for nullable fields
+	Code    *string `json:"code"`  // Use pointer for nullable fields
 }
 
 /*
-Success: 200
 
-	Data
-	{
-		"id": "asst_id",
-		"object": "assistant.deleted",
-		"deleted": true
+{
+	"id": "asst_id",
+	"object": "assistant.deleted",
+	"deleted": true,
+    "error": {
+        "message": "No assistant found with id 'asst_id'.",
+        "type": "invalid_request_error",
+        "param": null,
+        "code": null
+    }
+}
+
+
+Response: Success - 200
+{
+	"id": "asst_id",
+	"object": "assistant.deleted",
+	"deleted": true
+}
+
+Response: Error - No Assistant Found 404
+{
+	"error": {
+		"message": "No assistant found with id 'asst_id'.",
+		"type": "invalid_request_error",
+		"param": null,
+		"code": null
 	}
+}
 
-Error: No Assistant Found 404
-
-	Data
-	{
-		"error": {
-			"message": "No assistant found with id 'asst_id'.",
-			"type": "invalid_request_error",
-			"param": null,
-			"code": null
-		}
+Response: Error - Missing Header Param OpenAI-Beta 401 hint at a value of assistants=v1
+{
+	"error": {
+		"message": "You must provide the 'OpenAI-Beta' header to access the Assistants API. Please try again by setting the header 'OpenAI-Beta: assistants=v1'.",
+		"type": "invalid_request_error",
+		"param": null,
+		"code": "invalid_beta"
 	}
-Error: Missing Header Param OpenAI-Beta 401 hint at a value of assistants=v1
+}
 
-	Data
-	{
-		"error": {
-			"message": "You must provide the 'OpenAI-Beta' header to access the Assistants API. Please try again by setting the header 'OpenAI-Beta: assistants=v1'.",
-			"type": "invalid_request_error",
-			"param": null,
-			"code": "invalid_beta"
-		}
+Response: Error - Incorrect API Key 401 Check to see if single quotes in message string are empty. If they are then return empty API Key error instead of incorrect API Key error.
+{
+	"error": {
+		"message": "Incorrect API key provided: ''. You can find your API key at https://platform.openai.com/account/api-keys.",
+		"type": "invalid_request_error",
+		"param": null,
+		"code": "invalid_api_key"
 	}
+}
 
-Error: Incorrect API Key 401 Check to see if single quotes in message string are empty. If they are then return empty API Key error instead of incorrect API Key error.
-
-	Data
-	{
-		"error": {
-			"message": "Incorrect API key provided: ''. You can find your API key at https://platform.openai.com/account/api-keys.",
-			"type": "invalid_request_error",
-			"param": null,
-			"code": "invalid_api_key"
-		}
-	}
 */
 // DeleteAssistant deletes an assistant by ID.
 func (c *Client) DeleteAssistant(ctx context.Context, assistantID string) error {
 	return c.sendHTTPRequest(ctx, http.MethodDelete, AssembleAssistantURL(assistantID), nil, nil, assistantsBaseHeaders)
+}
+
+type ListAssistantsParams struct {
+	Limit  int
+	Order  string
+	After  string
+	Before string
 }
 
 // ListAssistantsResponse is the response struct for ListAssistants function.
@@ -202,13 +234,6 @@ type ListAssistantsResponse struct {
 	FirstID string             `json:"first_id"`
 	LastID  string             `json:"last_id"`
 	HasMore bool               `json:"has_more"`
-}
-
-type ListAssistantsParams struct {
-	Limit  int
-	Order  string
-	After  string
-	Before string
 }
 
 /*
