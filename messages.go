@@ -109,7 +109,7 @@ func (c *Client) CreateMessage(ctx context.Context, params CreateMessageParams) 
 
 	requestBody := struct {
 		Role     string            `json:"role"`
-		Content  []Content         `json:"content"`
+		Content  string            `json:"content"`
 		FileIDs  []string          `json:"file_ids,omitempty"`
 		Metadata map[string]string `json:"metadata,omitempty"`
 	}{
